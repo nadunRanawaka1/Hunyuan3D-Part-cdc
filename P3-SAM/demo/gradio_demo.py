@@ -10,7 +10,7 @@ from auto_mask_no_postprocess import AutoMask as AutoMaskNoPostProcess
 import trimesh
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument('--ckpt_path', type=str, default=None, help='模型路径')
+argparser.add_argument('--ckpt_path', type=str, default=None, help='Model path')
 args = argparser.parse_args()
 
 automask = AutoMask(args.ckpt_path)

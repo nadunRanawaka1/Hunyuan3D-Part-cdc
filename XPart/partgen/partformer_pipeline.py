@@ -21,6 +21,7 @@ from .utils.misc import (
     get_config_from_file,
     smart_load_model,
 )
+from safetensors.torch import load_file as load_safetensors
 
 from diffusers.utils.torch_utils import randn_tensor
 from pathlib import Path
@@ -239,24 +240,45 @@ class PartFormerPipeline(TokenAllocMixin):
         ckpt_path = smart_load_model(
             model_path="tencent/Hunyuan3D-Part",
         )
-        ckpt = torch.load(os.path.join(ckpt_path, "xpart.pt"), map_location="cpu")
+        # model = instantiate_from_config(config["model"])
+        # model_path = os.path.join(ckpt_path, "model/model.safetensors")
+        # if model_path.endswith('.safetensors'):
+        #     state_dict = load_safetensors(model_path, device="cpu")
+        #     model.load_state_dict(state_dict, strict=False)
+        # else:
+        #     ckpt = torch.load(model_path, map_location="cpu", weights_only=False)
+        #     init_from_ckpt(model, ckpt, prefix="model", ignore_keys=ignore_keys)
+
         # load model
         model = instantiate_from_config(config["model"])
-        # model.load_state_dict(ckpt["model"])
-        init_from_ckpt(model, ckpt, prefix="model", ignore_keys=ignore_keys)
+        model_path = os.path.join(ckpt_path, "model/model.safetensors")
+        model_state_dict = load_safetensors(model_path, device="cpu")
+        model.load_state_dict(model_state_dict, strict=False)
+
+        # load vae
+        vae_path = os.path.join(ckpt_path, "shapevae/shapevae.safetensors")
+        vae_state_dict = load_safetensors(vae_path, device="cpu")
         vae = instantiate_from_config(config["shapevae"])
+        vae.load_state_dict(vae_state_dict, strict=False)
+
         # vae.load_state_dict(ckpt["shapevae"], strict=False)
-        init_from_ckpt(vae, ckpt, prefix="shapevae", ignore_keys=ignore_keys)
+        # init_from_ckpt(vae, ckpt, prefix="shapevae", ignore_keys=ignore_keys)
+
+        # load conditioner
         if config.get("conditioner", None) is not None:
+            conditioner_path = os.path.join(ckpt_path, "conditioner/conditioner.safetensors")
+            conditioner_state_dict = load_safetensors(conditioner_path, device="cpu")
             conditioner = instantiate_from_config(config["conditioner"])
-            init_from_ckpt(
-                conditioner, ckpt, prefix="conditioner", ignore_keys=ignore_keys
-            )
+            conditioner.load_state_dict(conditioner_state_dict, strict=False)
+            # init_from_ckpt(
+            #     conditioner, ckpt, prefix="conditioner", ignore_keys=ignore_keys
+            # )
         else:
             conditioner = vae
+
         scheduler = instantiate_from_config(config["scheduler"])
         config["bbox_predictor"]["params"]["ckpt_path"] = os.path.join(
-            ckpt_path, "p3sam.ckpt"
+            ckpt_path, "p3sam/p3sam.safetensors"
         )
         bbox_predictor = instantiate_from_config(config.get("bbox_predictor", None))
         model_kwargs = dict(
