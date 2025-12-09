@@ -26,6 +26,7 @@ from ..models import sonata
 #################################
 sys.path.append("../P3-SAM")
 from model import build_P3SAM, load_state_dict
+from safetensors.torch import load_file as load_safetensors
 
 
 class YSAM(nn.Module):
@@ -35,7 +36,8 @@ class YSAM(nn.Module):
 
     def load_state_dict(
         self,
-        state_dict,
+        ckpt_path=None,
+        state_dict=None,
         strict=True,
         assign=False,
         ignore_seg_mlp=False,
@@ -44,7 +46,8 @@ class YSAM(nn.Module):
     ):
         load_state_dict(
             self,
-            state_dict,
+            ckpt_path=ckpt_path,
+            state_dict=state_dict,
             strict=strict,
             assign=assign,
             ignore_seg_mlp=ignore_seg_mlp,
@@ -1361,8 +1364,11 @@ class AutoMask:
         post_process: bool, Whether to post-process
         """
         self.model = YSAM()
+        # self.model.load_state_dict(
+        #     torch.load(ckpt_path, map_location="cpu")["state_dict"]
+        # )
         self.model.load_state_dict(
-            torch.load(ckpt_path, map_location="cpu")["state_dict"]
+            ckpt_path=ckpt_path
         )
         self.model.eval()
         self.model_parallel = torch.nn.DataParallel(self.model)

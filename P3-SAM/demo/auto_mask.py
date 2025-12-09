@@ -1265,6 +1265,37 @@ class AutoMask:
         self.threshold = threshold
         self.post_process = post_process
 
+    def release(self):
+        """
+        Release GPU memory by deleting model references and clearing CUDA cache.
+        """
+        import gc
+        
+        # Move models to CPU first (helps with memory release)
+        if hasattr(self, 'model') and self.model is not None:
+            self.model.cpu()
+            del self.model
+            self.model = None
+        
+        if hasattr(self, 'model_parallel') and self.model_parallel is not None:
+            self.model_parallel.cpu()
+            del self.model_parallel
+            self.model_parallel = None
+        
+        # Force garbage collection
+        gc.collect()
+        
+        # Clear CUDA cache
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    
+    def __del__(self):
+        """Destructor - automatically release resources."""
+        try:
+            self.release()
+        except:
+            pass  # Ignore errors during destruction
+
     def predict_aabb(
         self, mesh, point_num=None, prompt_num=None, threshold=None, post_process=None, save_path=None, save_mid_res=False, show_info=True, clean_mesh_flag=True, seed=42, is_parallel=True, prompt_bs=32
     ):

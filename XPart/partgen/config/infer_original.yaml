@@ -27,8 +27,6 @@ bbox_predictor:
   target: partgen.bbox_estimator.auto_mask_api.AutoMask
   params:
     ckpt_path: checkpoints/p3sam.ckpt
-    point_num: 25000
-    prompt_num: 500
 conditioner:
   target: partgen.models.conditioner.condioner_release.Conditioner
   params:

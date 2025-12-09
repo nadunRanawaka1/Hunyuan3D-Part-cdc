@@ -5,7 +5,7 @@ import torch.nn as nn
 from safetensors.torch import load_file as load_safetensors
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'XPart/partgen'))
 from models import sonata
-from utils.misc import smart_load_model
+# from utils.misc import smart_load_model
 
 '''
 This is the P3-SAM model.
@@ -114,7 +114,6 @@ def load_state_dict(self,
                     ignore_seg_s2_mlp=False, 
                     ignore_iou_mlp=False):   # load checkpoint
     if ckpt_path is not None:
-        # breakpoint()
         print(f'loading checkpoint from {ckpt_path}')
         # Check if it's a safetensors file
         if ckpt_path.endswith('.safetensors'):

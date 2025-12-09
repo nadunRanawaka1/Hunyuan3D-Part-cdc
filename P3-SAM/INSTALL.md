@@ -4,11 +4,37 @@
 
 ### Option 1: Development Install (Recommended for local usage)
 
+Install all dependencies
+```bash
+mamba create -n 3D_part python=3.10
+mamba activate 3D_part
+pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu126
+pip install spconv-cu126
+pip install torch-scatter -f https://data.pyg.org/whl/torch-2.6.0+cu126.html
+pip install packaging
+pip install ninja
+pip install flash-attn --no-build-isolation
+pip install huggingface_hub timm omegaconf
+pip install viser fpsample trimesh numba gradio
+cd utils/chamfer3D
+python setup.py install
+```
+
 Install in editable mode so you can use the package from anywhere while still being able to edit the source:
 
 ```bash
 cd /home/nranawakaara/Projects/Hunyuan3D-Part/P3-SAM
 pip install -e .
+```
+
+Then, for XPART
+
+```bash
+cd /home/nranawakaara/Projects/Hunyuan3D-Part/XPart
+pip install -r requirements.txt
+pip install scikit-image diffusers
+pip install lightning
+pip install torch-cluster -f https://data.pyg.org/whl/torch-2.6.0+cu126.html
 ```
 
 ### Option 2: Regular Install
@@ -75,127 +101,4 @@ aabb, face_ids, mesh = auto_mask.predict_aabb(
 print(f"Found {len(aabb)} parts")
 ```
 
-### 3. Programmatic Usage Example
-
-```python
-#!/usr/bin/env python3
-"""Example script using installed P3-SAM package."""
-
-import sys
-import trimesh
-import numpy as np
-from pathlib import Path
-from demo.auto_mask import AutoMask
-
-def segment_mesh(mesh_path, output_dir, checkpoint_path):
-    """Segment a mesh into parts."""
-    
-    # Initialize AutoMask
-    auto_mask = AutoMask(
-        ckpt_path=checkpoint_path,
-        point_num=100000,
-        prompt_num=400,
-        threshold=0.95,
-        post_process=True
-    )
-    
-    # Load mesh
-    mesh = trimesh.load(mesh_path, force='mesh')
-    
-    # Run segmentation
-    aabb, face_ids, mesh = auto_mask.predict_aabb(
-        mesh,
-        save_path=output_dir,
-        save_mid_res=True,
-        show_info=True,
-    )
-    
-    # Get part information
-    unique_parts = np.unique(face_ids[face_ids >= 0])
-    print(f"\nSegmentation complete!")
-    print(f"  Found {len(unique_parts)} parts")
-    print(f"  Part IDs: {unique_parts.tolist()}")
-    print(f"  Results saved to: {output_dir}")
-    
-    return aabb, face_ids, mesh
-
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python example.py <mesh_path> <output_dir> [checkpoint_path]")
-        sys.exit(1)
-    
-    mesh_path = sys.argv[1]
-    output_dir = sys.argv[2]
-    checkpoint_path = sys.argv[3] if len(sys.argv) > 3 else None
-    
-    aabb, face_ids, mesh = segment_mesh(mesh_path, output_dir, checkpoint_path)
-```
-
-## Verifying Installation
-
-```python
-# Test import
-python -c "from demo.auto_mask import AutoMask; print('P3-SAM installed successfully!')"
-```
-
-## Troubleshooting
-
-### Import Errors
-
-If you get import errors, make sure you're in a directory outside of the P3-SAM source:
-
-```bash
-cd ~  # Go to home directory
-python -c "from demo.auto_mask import AutoMask"
-```
-
-### CUDA Errors
-
-Make sure PyTorch is installed with CUDA support:
-
-```bash
-python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
-```
-
-### Sonata Dependencies
-
-If you get errors about Sonata, make sure you've installed it:
-
-```bash
-# Install Sonata from Facebook Research
-pip install git+https://github.com/facebookresearch/sonata.git
-```
-
-### XPart Dependencies
-
-The package requires XPart modules. Make sure the path in `model.py` is correct:
-
-```python
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'XPart/partgen'))
-```
-
-## Uninstalling
-
-```bash
-pip uninstall p3sam
-```
-
-## Development Workflow
-
-For active development:
-
-1. Install in editable mode: `pip install -e .`
-2. Make changes to source files
-3. Changes are immediately available (no reinstall needed)
-4. Run tests: `pytest tests/` (if tests exist)
-5. Format code: `black .` (if black is installed)
-
-## Environment Variables
-
-You can set environment variables for default paths:
-
-```bash
-export P3SAM_CHECKPOINT=/path/to/weights/p3sam.safetensors
-export P3SAM_OUTPUT_DIR=/path/to/default/output
-```
 
