@@ -8,6 +8,7 @@ from tqdm import tqdm
 import copy
 from typing import List, Optional, Union
 import os
+from safetensors.torch import load_file
 from .utils.mesh_utils import (
     SampleMesh,
     load_surface_points,
@@ -21,8 +22,11 @@ from .utils.misc import (
     get_config_from_file,
     smart_load_model,
 )
-from safetensors.torch import load_file as load_safetensors
 
+from safetensors.torch import load_file as load_safetensors
+from easydict import EasyDict
+
+import json
 from diffusers.utils.torch_utils import randn_tensor
 from pathlib import Path
 
@@ -223,22 +227,13 @@ class PartFormerPipeline(TokenAllocMixin):
     @classmethod
     def from_pretrained(
         cls,
-        config=None,
+        model_path="tencent/Hunyuan3D-Part",
         dtype=torch.float32,
-        ignore_keys=(),
         device="cuda",
         **kwargs,
     ):
-        if config is None:
-            config = get_config_from_file(
-                str(
-                    Path(__file__).parent.parent
-                    / "config"
-                    / "partformer_full_pipeline_512_with_sonata.yaml"
-                )
-            )
-        ckpt_path = smart_load_model(
-            model_path="tencent/Hunyuan3D-Part",
+        model_dir = smart_load_model(
+            model_path=model_path,
         )
         # model = instantiate_from_config(config["model"])
         # model_path = os.path.join(ckpt_path, "model/model.safetensors")

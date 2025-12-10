@@ -84,6 +84,7 @@ conditioner:
         point_feats: 4
         pc_size: *pc_size
         pc_sharpedge_size: *pc_sharpedge_size
+        
     seg_feat_cfg:
       target: partgen.models.conditioner.sonata_extractor.SonataFeatureExtractor
 
