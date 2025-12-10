@@ -1,12 +1,7 @@
 import os
 import sys
-<<<<<<< HEAD
 import torch
 import torch.nn as nn
-=======
-import torch 
-import torch.nn as nn 
->>>>>>> cdc
 from safetensors.torch import load_file as load_safetensors
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'XPart/partgen'))
 from models import sonata
@@ -21,11 +16,7 @@ The model is composed of three parts:
 '''
 def build_P3SAM(self): #build p3sam
     ######################## Sonata ########################
-<<<<<<< HEAD
     self.sonata = sonata.load("sonata", repo_id="facebook/sonata", download_root='weights/sonata/')
-=======
-    self.sonata = sonata.load("sonata", repo_id="facebook/sonata", download_root='/home/nranawakaara/Projects/Hunyuan3D-Part/P3-SAM/sonata')
->>>>>>> cdc
     self.mlp = nn.Sequential(
             nn.Linear(1232, 512),
             nn.GELU(),
@@ -123,30 +114,18 @@ def load_state_dict(self,
                     ignore_seg_s2_mlp=False, 
                     ignore_iou_mlp=False):   # load checkpoint
     if ckpt_path is not None:
-<<<<<<< HEAD
         if ckpt_path.endswith('.safetensors'):
             state_dict = load_safetensors(ckpt_path)
         else:
             state_dict = torch.load(ckpt_path, map_location="cpu")["state_dict"]
-=======
-        print(f'loading checkpoint from {ckpt_path}')
-        # Check if it's a safetensors file
-        if ckpt_path.endswith('.safetensors'):
-            state_dict = load_safetensors(ckpt_path)
-            # Safetensors may or may not have a "state_dict" key wrapper
-            if "state_dict" in state_dict:
-                state_dict = state_dict["state_dict"]
-        else:
-            # Load .ckpt or .pt files with torch.load
-            state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=True)["state_dict"]
->>>>>>> cdc
     elif state_dict is None:
         # download from huggingface
         print(f'trying to download model from huggingface...')
         from huggingface_hub import hf_hub_download
-        ckpt_path = hf_hub_download(repo_id="tencent/Hunyuan3D-Part", filename="p3sam/p3sam.safetensors", local_dir='weights')
+        ckpt_path = hf_hub_download(repo_id="tencent/Hunyuan3D-Part", filename="p3sam/p3sam.safetensors", local_dir=os.path.join(os.path.expanduser('~'), '/.cache/p3sam/weights'))
         print(f'download model from huggingface to: {ckpt_path}')
-        state_dict = load_safetensors(ckpt_path)
+        from safetensors.torch import load_file
+        state_dict = load_file(ckpt_path)
 
     local_state_dict = self.state_dict()
     seen_keys = {k: False for k in local_state_dict.keys()}
