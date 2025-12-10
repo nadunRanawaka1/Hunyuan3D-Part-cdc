@@ -160,13 +160,9 @@ def smart_load_model(
             # Download only the specified subdirectory
             path = snapshot_download(
                 repo_id=original_model_path,
-<<<<<<< HEAD
-                # allow_patterns=[f"{subfolder}/*"],  # Key modification: pattern matching for subfolder
-                local_dir=model_fld,
-=======
                 # allow_patterns=[f"{subfolder}/*"],  # 关键修改：模式匹配子文件夹
                 local_dir=model_path,
->>>>>>> e96be065375438962375b55326416291342958a7
+
             )
             model_path = path  # os.path.join(path, subfolder)  # Keep path concatenation logic unchanged
         except ImportError:
