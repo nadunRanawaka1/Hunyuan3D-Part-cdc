@@ -22,7 +22,6 @@ from .utils.misc import (
     get_config_from_file,
     smart_load_model,
 )
-
 from safetensors.torch import load_file as load_safetensors
 from easydict import EasyDict
 
@@ -235,47 +234,34 @@ class PartFormerPipeline(TokenAllocMixin):
         model_dir = smart_load_model(
             model_path=model_path,
         )
-        # model = instantiate_from_config(config["model"])
-        # model_path = os.path.join(ckpt_path, "model/model.safetensors")
-        # if model_path.endswith('.safetensors'):
-        #     state_dict = load_safetensors(model_path, device="cpu")
-        #     model.load_state_dict(state_dict, strict=False)
-        # else:
-        #     ckpt = torch.load(model_path, map_location="cpu", weights_only=False)
-        #     init_from_ckpt(model, ckpt, prefix="model", ignore_keys=ignore_keys)
-
-        # load model
-        model = instantiate_from_config(config["model"])
-        model_path = os.path.join(ckpt_path, "model/model.safetensors")
-        model_state_dict = load_safetensors(model_path, device="cpu")
-        model.load_state_dict(model_state_dict, strict=False)
-
-        # load vae
-        vae_path = os.path.join(ckpt_path, "shapevae/shapevae.safetensors")
-        vae_state_dict = load_safetensors(vae_path, device="cpu")
-        vae = instantiate_from_config(config["shapevae"])
-        vae.load_state_dict(vae_state_dict, strict=False)
-
-        # vae.load_state_dict(ckpt["shapevae"], strict=False)
-        # init_from_ckpt(vae, ckpt, prefix="shapevae", ignore_keys=ignore_keys)
-
-        # load conditioner
-        if config.get("conditioner", None) is not None:
-            conditioner_path = os.path.join(ckpt_path, "conditioner/conditioner.safetensors")
-            conditioner_state_dict = load_safetensors(conditioner_path, device="cpu")
-            conditioner = instantiate_from_config(config["conditioner"])
-            conditioner.load_state_dict(conditioner_state_dict, strict=False)
-            # init_from_ckpt(
-            #     conditioner, ckpt, prefix="conditioner", ignore_keys=ignore_keys
-            # )
-        else:
-            conditioner = vae
-
-        scheduler = instantiate_from_config(config["scheduler"])
-        config["bbox_predictor"]["params"]["ckpt_path"] = os.path.join(
-            ckpt_path, "p3sam/p3sam.safetensors"
+        model_ckpt = load_file(os.path.join(model_dir, "model/model.safetensors"))
+        conditioner_ckpt = load_file(
+            os.path.join(model_dir, "conditioner/conditioner.safetensors")
         )
-        bbox_predictor = instantiate_from_config(config.get("bbox_predictor", None))
+        shapevae_ckpt = load_file(
+            os.path.join(model_dir, "shapevae/shapevae.safetensors")
+        )
+        p3sam_path = os.path.join(model_dir, "p3sam/p3sam.safetensors")
+        with open(os.path.join(model_dir, "model/config.json"), "r") as f:
+            model_config = EasyDict(json.load(f))
+        with open(os.path.join(model_dir, "conditioner/config.json"), "r") as f:
+            conditioner_config = EasyDict(json.load(f))
+        with open(os.path.join(model_dir, "shapevae/config.json"), "r") as f:
+            shapevae_config = EasyDict(json.load(f))
+        with open(os.path.join(model_dir, "scheduler/config.json"), "r") as f:
+            scheduler_config = EasyDict(json.load(f))
+        with open(os.path.join(model_dir, "p3sam/config.json"), "r") as f:
+            bbox_predictor_config = EasyDict(json.load(f))
+            bbox_predictor_config["params"]["ckpt_path"] = p3sam_path
+        # load model
+        model = instantiate_from_config(model_config)
+        model.load_state_dict(model_ckpt)
+        vae = instantiate_from_config(shapevae_config)
+        vae.load_state_dict(shapevae_ckpt)
+        conditioner = instantiate_from_config(conditioner_config)
+        conditioner.load_state_dict(conditioner_ckpt)
+        scheduler = instantiate_from_config(scheduler_config)
+        bbox_predictor = instantiate_from_config(bbox_predictor_config)
         model_kwargs = dict(
             vae=vae,
             model=model,

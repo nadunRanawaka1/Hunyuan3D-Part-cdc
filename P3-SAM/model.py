@@ -17,7 +17,7 @@ The model is composed of three parts:
 '''
 def build_P3SAM(self): #build p3sam
     ######################## Sonata ########################
-    self.sonata = sonata.load("sonata", repo_id="facebook/sonata", download_root='weights/sonata/')
+    self.sonata = sonata.load("sonata", repo_id="facebook/sonata", download_root='/root/sonata')
     self.mlp = nn.Sequential(
             nn.Linear(1232, 512),
             nn.GELU(),
@@ -115,12 +115,10 @@ def load_state_dict(self,
                     ignore_seg_s2_mlp=False, 
                     ignore_iou_mlp=False):   # load checkpoint
     if ckpt_path is not None:
-<<<<<<< HEAD
         if ckpt_path.endswith('.safetensors'):
             state_dict = load_safetensors(ckpt_path)
         else:
             state_dict = torch.load(ckpt_path, map_location="cpu")["state_dict"]
-=======
         print(f'loading checkpoint from {ckpt_path}')
         # Check if it's a safetensors file
         if ckpt_path.endswith('.safetensors'):
@@ -131,7 +129,11 @@ def load_state_dict(self,
         else:
             # Load .ckpt or .pt files with torch.load
             state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=True)["state_dict"]
->>>>>>> cdc
+        if ckpt_path.endswith('.pt') or ckpt_path.endswith('.ckpt'):
+            state_dict = torch.load(ckpt_path, map_location="cpu")["state_dict"]
+        elif ckpt_path.endswith('.safetensors'):
+            from safetensors.torch import load_file
+            state_dict = load_file(ckpt_path)
     elif state_dict is None:
         # download from huggingface
         print(f'trying to download model from huggingface...')
